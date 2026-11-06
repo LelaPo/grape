@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Калькулятор средневзвешенного балла</title>
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --surface-sub: #f0f0f2;
+      --border: #e5e5ea;
+      --border-sub: #ebebef;
+      
+      --text: #1d1d1f;
+      --text-muted: #86868b;
+      --text-soft: #a1a1a6;
+      
+      --accent: #0071e3;
+      --accent-hover: #0077ed;
+      
+      --g5: #10b981;
+      --g4: #2563eb;
+      --g3: #f59e0b;
+      --g2: #ef4444;
+    }
+
+    [data-theme="dark"] {
+      --bg: #000000;
+      --surface: #1c1c1e;
+      --surface-sub: #2c2c2e;
+      --border: #38383a;
+      --border-sub: #2c2c2e;
+      
+      --text: #f5f5f7;
+      --text-muted: #8e8e93;
+      --text-soft: #636366;
+      
+      --accent: #0a84ff;
+      --accent-hover: #409cff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 16px 12px 60px;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Верхняя панель с переключателем темы */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2px 4px;
+    }
+
+    .app-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .theme-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    /* Главный дисплей балла */
+    .hero-card {
+      background: var(--surface);
+      border-radius: 22px;
+      padding: 24px 20px;
+      text-align: center;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    }
+
+    .hero-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .hero-score {
+      font-size: 4rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 4px 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hero-status {
+      display: inline-flex;
+      padding: 4px 14px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      background: var(--surface-sub);
+      color: var(--text-muted);
+    }
+
+    /* Прогнозы */
+    .forecast-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .target-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    }
+
+    .target-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .target-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    /* Крупный переключатель оценок в прогнозе */
+    .target-picker {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface-sub);
+      padding: 3px;
+      border-radius: 10px;
+    }
+
+    .picker-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 0 4px;
+    }
+
+    .picker-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    .picker-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .target-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .target-item {
+      background: var(--surface-sub);
+      border-radius: 12px;
+      padding: 8px 6px;
+      text-align: center;
+    }
+
+    .target-item-qty {
+      font-size: 1.15rem;
+      font-weight: 800;
+      display: block;
+    }
+
+    .target-item-type {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 2px;
+      line-height: 1.2;
+    }
+
+    .impossible-box {
+      background: var(--surface-sub);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    .success-msg {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--g5);
+      text-align: center;
+    }
+
+    /* Панель ввода */
+    .input-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .group-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+
+    .grade-selector {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .grade-btn {
+      background: var(--surface-sub);
+      border: 1.5px solid transparent;
+      color: var(--text);
+      font-size: 1.6rem;
+      font-weight: 800;
+      padding: 10px 0;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.05s ease;
+    }
+
+    .grade-btn:active { transform: scale(0.96); }
+
+    .grade-btn[data-val="5"].active { background: #dcfce7; color: #15803d; border-color: #86efac; }
+    .grade-btn[data-val="4"].active { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+    .grade-btn[data-val="3"].active { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+    .grade-btn[data-val="2"].active { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+
+    [data-theme="dark"] .grade-btn[data-val="5"].active { background: #064e3b; color: #6ee7b7; border-color: #047857; }
+    [data-theme="dark"] .grade-btn[data-val="4"].active { background: #1e3a8a; color: #93c5fd; border-color: #1d4ed8; }
+    [data-theme="dark"] .grade-btn[data-val="3"].active { background: #78350f; color: #fde68a; border-color: #b45309; }
+    [data-theme="dark"] .grade-btn[data-val="2"].active { background: #7f1d1d; color: #fca5a5; border-color: #b91c1c; }
+
+    .weight-selector {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .weight-btn {
+      background: var(--surface-sub);
+      border: 1.5px solid transparent;
+      padding: 10px 12px;
+      border-radius: 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.05s ease;
+    }
+
+    .weight-btn:active { transform: scale(0.97); }
+
+    .weight-btn.active {
+      background: var(--surface);
+      border-color: var(--text);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .weight-val {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text);
+      display: block;
+      line-height: 1.2;
+    }
+
+    .weight-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      display: block;
+    }
+
+    .submit-btn {
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .submit-btn:active { opacity: 0.9; transform: scale(0.98); }
+
+    /* Лента выставленных оценок */
+    .history-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 16px;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .clear-btn {
+      background: none;
+      border: none;
+      color: var(--g2);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .chips-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .grade-chip {
+      background: var(--surface-sub);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 6px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .grade-chip:active {
+      background: #fee2e2;
+      border-color: #fca5a5;
+    }
+
+    .chip-grade {
+      font-size: 1.45rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .chip-grade[data-g="5"] { color: var(--g5); }
+    .chip-grade[data-g="4"] { color: var(--g4); }
+    .chip-grade[data-g="3"] { color: var(--g3); }
+    .chip-grade[data-g="2"] { color: var(--g2); }
+
+    .chip-weight {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-soft);
+      font-size: 0.85rem;
+      padding: 18px 0;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Верхняя строка с темой -->
+  <div class="top-bar">
+    <span class="app-title">Средневзвешенный балл</span>
+    <button class="theme-btn" id="themeBtn">
+      <span id="themeIcon">🌙</span>
+      <span id="themeText">Тёмная</span>
+    </button>
+  </div>
+
+  <!-- Главный дисплей -->
+  <div class="hero-card">
+    <div class="hero-label">Текущий балл</div>
+    <div class="hero-score" id="scoreDisplay">—</div>
+    <div class="hero-status" id="statusBadge">Оценок нет</div>
+  </div>
+
+  <!-- Прогнозы -->
+  <div class="forecast-section" id="forecastSection"></div>
+
+  <!-- Панель ввода -->
+  <div class="input-section">
+    <div>
+      <div class="group-label">Оценка:</div>
+      <div class="grade-selector">
+        <button class="grade-btn" data-val="2">2</button>
+        <button class="grade-btn" data-val="3">3</button>
+        <button class="grade-btn" data-val="4">4</button>
+        <button class="grade-btn active" data-val="5">5</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="group-label">Вес работы:</div>
+      <div class="weight-selector">
+        <button class="weight-btn active" data-w="1">
+          <span class="weight-val">Вес 1</span>
+          <span class="weight-desc">Ответ / ДЗ</span>
+        </button>
+        <button class="weight-btn" data-w="2">
+          <span class="weight-val">Вес 2</span>
+          <span class="weight-desc">Самостоялка</span>
+        </button>
+        <button class="weight-btn" data-w="3">
+          <span class="weight-val">Вес 3</span>
+          <span class="weight-desc">Контрольная</span>
+        </button>
+        <button class="weight-btn" data-w="4">
+          <span class="weight-val">Вес 4</span>
+          <span class="weight-desc">МЦКО / ВПР</span>
+        </button>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="addBtn">Поставить оценку</button>
+  </div>
+
+  <!-- Список оценок -->
+  <div class="history-card">
+    <div class="history-header">
+      <span class="group-label" style="margin:0">Оценки (нажмите для удаления)</span>
+      <button class="clear-btn" id="clearBtn">Сбросить</button>
+    </div>
+    <div class="chips-grid" id="chipsGrid"></div>
+  </div>
+</div>
+
+<script>
+  // Тема оформления
+  const themeBtn = document.getElementById('themeBtn');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeText = document.getElementById('themeText');
+
+  function applyTheme(isDark) {
+    if (isDark) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeIcon.textContent = '☀️';
+      themeText.textContent = 'Светлая';
+      localStorage.setItem('theme_mode', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '🌙';
+      themeText.textContent = 'Тёмная';
+      localStorage.setItem('theme_mode', 'light');
+    }
+  }
+
+  themeBtn.onclick = () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    applyTheme(!isDark);
+  };
+
+  // Проверка сохранённой темы или системных настроек
+  const savedTheme = localStorage.getItem('theme_mode');
+  if (savedTheme) {
+    applyTheme(savedTheme === 'dark');
+  } else {
+    applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+
+  // Логика калькулятора
+  let grades = JSON.parse(localStorage.getItem('grades_white') || '[]');
+  let selectedGrade = 5;
+  let selectedWeight = 1;
+
+  // Выбранная оценка для добивания по целям (3, 4, 5)
+  const targetChoices = { 3: 5, 4: 5, 5: 5 };
+
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const statusBadge = document.getElementById('statusBadge');
+  const forecastSection = document.getElementById('forecastSection');
+  const chipsGrid = document.getElementById('chipsGrid');
+
+  function save() {
+    localStorage.setItem('grades_white', JSON.stringify(grades));
+  }
+
+  function getCountNeeded(curSum, curWeight, threshold, targetGrade, weight) {
+    if (targetGrade <= threshold) return null;
+    const req = (threshold * curWeight - curSum) / (weight * (targetGrade - threshold));
+    return Math.max(1, Math.ceil(req));
+  }
+
+  function renderForecast(avg, sum, totalWeight) {
+    forecastSection.innerHTML = '';
+
+    if (totalWeight === 0) return;
+
+    if (avg >= 4.60) {
+      forecastSection.innerHTML = `
+        <div class="success-msg">
+          🎉 Выходит твёрдая 5 (балл ${avg.toFixed(2)}). Всё уже отлично!
+        </div>
+      `;
+      return;
+    }
+
+    // Собираем цели, которые выше текущего среднего балла
+    const targets = [];
+    if (avg < 2.60) targets.push({ mark: 3, threshold: 2.60, name: 'тройки' });
+    if (avg < 3.60) targets.push({ mark: 4, threshold: 3.60, name: 'четвёрки' });
+    if (avg < 4.60) targets.push({ mark: 5, threshold: 4.60, name: 'пятёрки' });
+
+    targets.forEach(t => {
+      const chosenGrade = targetChoices[t.mark] || 5;
+      const isPossible = chosenGrade > t.threshold;
+
+      const card = document.createElement('div');
+      card.className = 'target-card';
+
+      // Кнопки 5, 4, 3 видны всегда и крупно
+      const pickerHtml = `
+        <div class="target-picker">
+          <span class="picker-label">добивать:</span>
+          <button class="picker-btn ${chosenGrade === 5 ? 'active' : ''}" data-t="${t.mark}" data-g="5">5</button>
+          <button class="picker-btn ${chosenGrade === 4 ? 'active' : ''}" data-t="${t.mark}" data-g="4">4</button>
+          <button class="picker-btn ${chosenGrade === 3 ? 'active' : ''}" data-t="${t.mark}" data-g="3">3</button>
+        </div>
+      `;
+
+      let contentHtml = '';
+      if (!isPossible) {
+        contentHtml = `
+          <div class="impossible-box">
+            Оценкой <b>«${chosenGrade}»</b> нельзя поднять балл до ${t.threshold.toFixed(2)}, так как она тянет среднее вниз. Выберите оценку выше.
+          </div>
+        `;
+      } else {
+        const w1 = getCountNeeded(sum, totalWeight, t.threshold, chosenGrade, 1);
+        const w2 = getCountNeeded(sum, totalWeight, t.threshold, chosenGrade, 2);
+        const w3 = getCountNeeded(sum, totalWeight, t.threshold, chosenGrade, 3);
+
+        contentHtml = `
+          <div class="target-grid">
+            <div class="target-item">
+              <span class="target-item-qty">${w1} шт.</span>
+              <span class="target-item-type">за Д/З на ${chosenGrade}</span>
+            </div>
+            <div class="target-item">
+              <span class="target-item-qty">${w2} шт.</span>
+              <span class="target-item-type">за самост. на ${chosenGrade}</span>
+            </div>
+            <div class="target-item">
+              <span class="target-item-qty">${w3} шт.</span>
+              <span class="target-item-type">за контр. на ${chosenGrade}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="target-header">
+          <span class="target-title">До ${t.name} (${t.threshold.toFixed(2)})</span>
+          ${pickerHtml}
+        </div>
+        ${contentHtml}
+      `;
+
+      // Нажатия на переключатели оценок
+      card.querySelectorAll('.picker-btn').forEach(btn => {
+        btn.onclick = (e) => {
+          const targetMark = Number(e.currentTarget.dataset.t);
+          const gradeVal = Number(e.currentTarget.dataset.g);
+          targetChoices[targetMark] = gradeVal;
+          renderForecast(avg, sum, totalWeight);
+        };
+      });
+
+      forecastSection.appendChild(card);
+    });
+  }
+
+  function render() {
+    chipsGrid.innerHTML = '';
+
+    if (grades.length === 0) {
+      chipsGrid.innerHTML = '<div class="empty-state">Оценок пока нет</div>';
+      scoreDisplay.textContent = '—';
+      scoreDisplay.style.color = 'var(--text-muted)';
+      statusBadge.textContent = 'Оценок нет';
+      renderForecast(0, 0, 0);
+      return;
+    }
+
+    let sum = 0;
+    let totalWeight = 0;
+
+    grades.forEach((item, index) => {
+      sum += item.g * item.w;
+      totalWeight += item.w;
+
+      const chip = document.createElement('div');
+      chip.className = 'grade-chip';
+      chip.innerHTML = `
+        <span class="chip-grade" data-g="${item.g}">${item.g}</span>
+        <span class="chip-weight">${item.w}</span>
+      `;
+      chip.title = 'Нажмите, чтобы удалить';
+      chip.onclick = () => {
+        grades.splice(index, 1);
+        save();
+        render();
+      };
+      chipsGrid.appendChild(chip);
+    });
+
+    const avg = sum / totalWeight;
+    scoreDisplay.textContent = avg.toFixed(2);
+
+    if (avg >= 4.60) {
+      scoreDisplay.style.color = 'var(--g5)';
+      statusBadge.textContent = 'Выходит: 5';
+    } else if (avg >= 3.60) {
+      scoreDisplay.style.color = 'var(--g4)';
+      statusBadge.textContent = 'Выходит: 4';
+    } else if (avg >= 2.60) {
+      scoreDisplay.style.color = 'var(--g3)';
+      statusBadge.textContent = 'Выходит: 3';
+    } else {
+      scoreDisplay.style.color = 'var(--g2)';
+      statusBadge.textContent = 'Выходит: 2';
+    }
+
+    renderForecast(avg, sum, totalWeight);
+  }
+
+  // Выбор оценки
+  document.querySelectorAll('.grade-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedGrade = Number(btn.dataset.val);
+    };
+  });
+
+  // Выбор веса
+  document.querySelectorAll('.weight-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.weight-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedWeight = Number(btn.dataset.w);
+    };
+  });
+
+  // Добавить
+  document.getElementById('addBtn').onclick = () => {
+    grades.push({ g: selectedGrade, w: selectedWeight });
+    save();
+    render();
+  };
+
+  // Очистить
+  document.getElementById('clearBtn').onclick = () => {
+    if (grades.length === 0) return;
+    if (confirm('Очистить все оценки?')) {
+      grades = [];
+      save();
+      render();
+    }
+  };
+
+  render();
+</script>
+</body>
+</html>
